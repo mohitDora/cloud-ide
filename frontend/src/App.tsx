@@ -1,9 +1,14 @@
+import { Route, Routes } from "react-router-dom";
 import "./App.css";
+import Ide from "./pages/Ide";
 import Dashboard from "./pages/Dashboard";
 
 function App() {
   return <>
-  <Dashboard/>
+  <Routes>
+    <Route path="/" element={<Dashboard/>} />
+    <Route path="/:id" element={<Ide />} />
+  </Routes>
   </>;
 }
 

@@ -154,7 +154,7 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-6">
       <DialogBox onCreate={addProject} />
       <h1 className="text-xl font-bold">Projects</h1>
       {projects.length > 0 ? (
@@ -162,7 +162,7 @@ const Dashboard = () => {
       ) : (
         <p>No projects yet</p>
       )}
-    </div>
+    </main>
   );
 };
 
