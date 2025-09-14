@@ -1,38 +1,36 @@
 {
-  "users": [
+  "projects": [
     {
       "userId": "mohit123",
-      "projectId": "1757828913046",
+      "projectId": "1757830609285",
       "template": "node",
-      "fileTree": {
-        "name": "1757828913046",
-        "type": "folder",
-        "fullPath": "",
-        "children": [
-          {
-            "name": "index.js",
-            "type": "file",
-            "fullPath": "index.js"
-          },
-          {
-            "name": "package.json",
-            "type": "file",
-            "fullPath": "package.json"
-          },
-          {
-            "name": "source",
-            "type": "folder",
-            "fullPath": "source",
-            "children": [
-              {
-                "name": "many.js",
-                "type": "file",
-                "fullPath": "source\\many.js"
-              }
-            ]
-          }
-        ]
-      }
+      "fileTree": [
+        {
+          "name": "server.js",
+          "type": "file"
+        },
+        {
+          "name": "package.json",
+          "type": "file"
+        }
+      ]
+    },
+    {
+      "userId": "mohit123",
+      "projectId": "1757830698167",
+      "template": "node",
+      "fileTree": [
+        {
+          "name": "main.js",
+          "type": "file",
+          "fullPath": "main.js"
+        },
+        {
+          "name": "package.json",
+          "type": "file",
+          "fullPath": "package.json"
+        }
+      ]
     }
   ]
 }

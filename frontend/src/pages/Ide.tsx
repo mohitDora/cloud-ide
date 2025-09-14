@@ -6,8 +6,15 @@ import {
 } from "@/components/ui/resizable";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import axios from "axios";
+
+const userId = "mohit123";
+const projectId = "1757830698167";
+
+const wsServerUrl = `ws://localhost:4000/`;
+const httpServerUrl = `http://localhost:3000/api`;
 
 interface File {
   id: string;
@@ -34,10 +41,9 @@ const FolderTree = ({ folderStructure }: FolderStructureProps) => {
 };
 
 const Ide = () => {
-  const content = "console.log('Mohit');";
-
   const { id } = useParams();
 
+  const ws = useRef<WebSocket | null>(null);
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>("");
@@ -78,6 +84,21 @@ const Ide = () => {
   const terminalInstanceRef = useRef<Terminal | null>(null);
 
   useEffect(() => {
+    ws.current = new WebSocket(wsServerUrl);
+    ws.current.onopen = () => {
+      setIsWebSocketConnected(true);
+    };
+
+    ws.current.onmessage = (event) => {
+      console.log(event.data);
+    };
+
+    getFileContent("main.js");
+
+    return () => ws.current?.close();
+  }, []);
+
+  useEffect(() => {
     initializeTerminal();
 
     return () => {
@@ -87,11 +108,34 @@ const Ide = () => {
     };
   }, [id]);
 
+  function debounce(func: (...args: any[]) => void, delay: number) {
+    let timer: any;
+    return (...args: any[]) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => func(...args), delay);
+    };
+  }
+
   const getFiles = () => {
     setFiles([]);
   };
 
-  const getFileContent = (filename: string) => {};
+  const getFileContent = async (filepath: string) => {
+    try {
+      const res = await axios.get(`${httpServerUrl}/file-content`, {
+        params: {
+          userId,
+          projectId,
+          filepath,
+        },
+      });
+
+      setFileContent(res.data.fileContent);
+      console.log(res.data.fileContent);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   const saveFile = () => {};
 
@@ -136,6 +180,24 @@ const Ide = () => {
 
   const connectWebSocket = () => {};
 
+  const sendFileUpdate = useMemo(
+    () =>
+      debounce((value: string | undefined) => {
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+          ws.current.send(
+            JSON.stringify({
+              type: "file:update",
+              userId,
+              projectId,
+              filePath: "main.js",
+              content: value,
+            })
+          );
+        }
+      }, 2500),
+    [userId, projectId, selectedFile]
+  );
+
   return (
     <main className="flex h-screen">
       <ResizablePanelGroup direction="horizontal">
@@ -149,8 +211,13 @@ const Ide = () => {
               <MonacoEditor
                 height="100%"
                 language={"javascript"}
-                value={content}
-                //   onChange={(value) => setFileContent(value || '')}
+                onMount={(editor) => {
+                  editor.focus();
+                }}
+                value={fileContent}
+                onChange={(value) => {
+                  setFileContent(value || "");
+                  sendFileUpdate(value || "")}}
                 theme="vs-dark"
                 options={{
                   minimap: { enabled: false },
