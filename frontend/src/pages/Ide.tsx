@@ -13,7 +13,7 @@ interface File {
   id: string;
   name: string;
   type: "file" | "folder";
-  children: File[];
+  children?: File[];
 }
 
 interface FolderStructureProps {
@@ -26,9 +26,7 @@ const FolderTree = ({ folderStructure }: FolderStructureProps) => {
       {folderStructure.map((folder) => (
         <div key={folder.id} className="ml-4">
           {folder.name}
-          {folder.type === "folder" && (
-            <FolderTree folderStructure={folder.children} />
-          )}
+          {folder.children && <FolderTree folderStructure={folder.children} />}
         </div>
       ))}
     </div>
@@ -54,7 +52,6 @@ const Ide = () => {
           id: "2",
           name: "index.ts",
           type: "file",
-          children: [],
         },
       ],
     },
@@ -62,7 +59,6 @@ const Ide = () => {
       id: "3",
       name: "package.json",
       type: "file",
-      children: [],
     },
     {
       id: "4",
@@ -73,7 +69,6 @@ const Ide = () => {
           id: "5",
           name: "logo.png",
           type: "file",
-          children: [],
         },
       ],
     },
@@ -124,7 +119,7 @@ const Ide = () => {
 
       terminal.onData((data) => {
         terminal.write(data);
-      })
+      });
 
       terminalInstanceRef.current = terminal;
 

@@ -1,0 +1,38 @@
+{
+  "users": [
+    {
+      "userId": "mohit123",
+      "projectId": "1757828913046",
+      "template": "node",
+      "fileTree": {
+        "name": "1757828913046",
+        "type": "folder",
+        "fullPath": "",
+        "children": [
+          {
+            "name": "index.js",
+            "type": "file",
+            "fullPath": "index.js"
+          },
+          {
+            "name": "package.json",
+            "type": "file",
+            "fullPath": "package.json"
+          },
+          {
+            "name": "source",
+            "type": "folder",
+            "fullPath": "source",
+            "children": [
+              {
+                "name": "many.js",
+                "type": "file",
+                "fullPath": "source\\many.js"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
