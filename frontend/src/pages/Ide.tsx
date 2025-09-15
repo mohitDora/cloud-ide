@@ -13,7 +13,7 @@ import axios from "axios";
 const userId = "mohit123";
 const projectId = "1757830698167";
 
-const wsServerUrl = `ws://localhost:4000/`;
+const wsServerUrl = `ws://localhost:4000?userId=${userId}&projectId=${projectId}`;
 const httpServerUrl = `http://localhost:3000/api`;
 
 interface File {
@@ -43,7 +43,6 @@ const FolderTree = ({ folderStructure }: FolderStructureProps) => {
 const Ide = () => {
   const { id } = useParams();
 
-  const ws = useRef<WebSocket | null>(null);
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>("");
@@ -81,32 +80,63 @@ const Ide = () => {
   ]);
 
   const terminalRef = useRef<HTMLDivElement | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const terminalInstanceRef = useRef<Terminal | null>(null);
 
   useEffect(() => {
-    ws.current = new WebSocket(wsServerUrl);
-    ws.current.onopen = () => {
-      setIsWebSocketConnected(true);
-    };
-
-    ws.current.onmessage = (event) => {
-      console.log(event.data);
-    };
-
-    getFileContent("main.js");
-
-    return () => ws.current?.close();
-  }, []);
-
-  useEffect(() => {
     initializeTerminal();
+    initializeWebSocket();
+    getFileContent("main.js");
 
     return () => {
       if (terminalInstanceRef.current) {
         terminalInstanceRef.current.dispose();
       }
+
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
   }, [id]);
+
+  const initializeWebSocket = () => {
+    wsRef.current = new WebSocket(wsServerUrl);
+    wsRef.current.onopen = () => {
+      setIsWebSocketConnected(true);
+      terminalInstanceRef.current?.writeln("\r\n🔗 Connected to server...");
+    };
+
+    wsRef.current.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+
+        if (msg.type === "terminal:output") {
+          terminalInstanceRef.current?.write(msg.data);
+        }
+
+        if (msg.type === "error") {
+          terminalInstanceRef.current?.writeln(
+            `\r\n\x1b[31m[ERROR]\x1b[0m ${msg.message}`
+          );
+        }
+      } catch (e) {
+        terminalInstanceRef.current?.write(event.data);
+      }
+    };
+    wsRef.current.onerror = (err) => {
+      terminalInstanceRef.current?.writeln(
+        "\r\n\x1b[31m[WebSocket Error]\x1b[0m Connection failed"
+      );
+      console.error(err);
+    };
+
+    wsRef.current.onclose = () => {
+      setIsWebSocketConnected(false);
+      terminalInstanceRef.current?.writeln(
+        "\r\n\x1b[31m[Disconnected]\x1b[0m Lost connection to server"
+      );
+    };
+  };
 
   function debounce(func: (...args: any[]) => void, delay: number) {
     let timer: any;
@@ -116,9 +146,9 @@ const Ide = () => {
     };
   }
 
-  const getFiles = () => {
-    setFiles([]);
-  };
+  // const getFiles = () => {
+  //   setFiles([]);
+  // };
 
   const getFileContent = async (filepath: string) => {
     try {
@@ -137,7 +167,7 @@ const Ide = () => {
     }
   };
 
-  const saveFile = () => {};
+  // const saveFile = () => {};
 
   const initializeTerminal = () => {
     if (terminalRef.current) {
@@ -162,7 +192,14 @@ const Ide = () => {
       terminal.writeln("Welcome to React + Xterm.js 🚀");
 
       terminal.onData((data) => {
-        terminal.write(data);
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(
+            JSON.stringify({
+              type: "terminal:input",
+              input: data,
+            })
+          );
+        }
       });
 
       terminalInstanceRef.current = terminal;
@@ -178,13 +215,11 @@ const Ide = () => {
     }
   };
 
-  const connectWebSocket = () => {};
-
   const sendFileUpdate = useMemo(
     () =>
       debounce((value: string | undefined) => {
-        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-          ws.current.send(
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(
             JSON.stringify({
               type: "file:update",
               userId,
@@ -217,7 +252,8 @@ const Ide = () => {
                 value={fileContent}
                 onChange={(value) => {
                   setFileContent(value || "");
-                  sendFileUpdate(value || "")}}
+                  sendFileUpdate(value || "");
+                }}
                 theme="vs-dark"
                 options={{
                   minimap: { enabled: false },

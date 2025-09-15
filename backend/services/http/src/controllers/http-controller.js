@@ -1,14 +1,19 @@
 const express = require("express");
 const fs = require("fs-extra");
 const path = require("path");
+const { execSync, spawn } = require("child_process");
 
 const {
-    BASE_FILE_TREE_PYTHON,
-    BASE_FILE_TREE_NODEJS,
-    DB_PATH,
-    ROOT_DIR,
+  BASE_FILE_TREE_PYTHON,
+  BASE_FILE_TREE_NODEJS,
+  DB_PATH,
+  ROOT_DIR,
 } = require("../utils/constants");
-const { copyFolder, updateFileTree } = require("../utils/http-utils");
+const {
+  copyFolder,
+  updateFileTree,
+  getOrCreateContainer,
+} = require("../utils/http-utils");
 
 const router = express.Router();
 
@@ -33,12 +38,13 @@ router.post("/create-project", (req, res) => {
       userId,
       projectId,
       template,
+      containerName: null,
       fileTree:
         template === "node" ? BASE_FILE_TREE_NODEJS : BASE_FILE_TREE_PYTHON,
     });
     fs.writeFileSync(DB_PATH, JSON.stringify(db));
 
-    res.status(200).json({ projectId });
+    res.status(200).json({ projectId, containerName });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
