@@ -19,6 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import axios from "axios";
+import { httpServerUrl, userId, projectId, wsServerUrl } from "@/utils/constants";
+import { Link } from "react-router-dom";
 
 interface Project {
   id: string;
@@ -34,6 +37,7 @@ interface ProjectsProps {
 const Projects = ({ projects }: ProjectsProps) => (
   <div className="flex flex-wrap gap-4">
     {projects.map((project) => (
+      <Link key={project.id} to={`/${project.id}`}>
       <div
         key={project.id}
         className="inline-block p-4 min-w-64 flex-col gap-4 outline rounded"
@@ -42,6 +46,7 @@ const Projects = ({ projects }: ProjectsProps) => (
         <p>{project.template}</p>
         <p className="text-sm text-gray-500">{project.createdAt}</p>
       </div>
+      </Link>
     ))}
   </div>
 );
@@ -132,26 +137,21 @@ const DialogBox = ({ onCreate }: DialogBoxProps) => {
 const Dashboard = () => {
   const [projects, setProjects] = useState<Project[]>([]);
 
-  const addProject = (newProject: Project) => {
-    setProjects((prev) => [...prev, newProject]);
+  const getProjects = async (userId: string) => {
+    const res = await axios.get(`${httpServerUrl}/projects?userId=${userId}`)
+    setProjects(res.data.projects)
+  }
+
+  const addProject = async (newProject: Project) => {
+    await axios.post(`${httpServerUrl}/create-project?userId=${userId}&name=${newProject.name}&template=${newProject.template}`)
+    getProjects(userId)
   };
 
   useEffect(() => {
-    setProjects([
-      {
-        id: "1",
-        name: "Project 1",
-        template: "python",
-        createdAt: "2021-01-01",
-      },
-      {
-        id: "2",
-        name: "Project 2",
-        template: "node",
-        createdAt: "2021-02-01",
-      },
-    ]);
+    getProjects(userId)
   }, []);
+
+  console.log(projects);
 
   return (
     <main className="space-y-6">

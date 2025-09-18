@@ -2,33 +2,46 @@
   "projects": [
     {
       "userId": "mohit123",
-      "projectId": "1757830609285",
+      "name": "first-node-app",
+      "projectId": "1758208560903",
       "template": "node",
+      "createdAt": "2025-09-18T15:16:00.905Z",
+      "containerName": "runner-mohit123-1758208560903",
       "fileTree": [
         {
-          "name": "server.js",
-          "type": "file"
+          "name": "index.js",
+          "type": "file",
+          "fullpath": "index.js"
+        },
+        {
+          "name": "main.js",
+          "type": "file",
+          "fullpath": "main.js"
         },
         {
           "name": "package.json",
-          "type": "file"
+          "type": "file",
+          "fullpath": "package.json"
+        },
+        {
+          "name": "src",
+          "type": "folder",
+          "fullpath": "src",
+          "children": []
         }
       ]
     },
     {
       "userId": "mohit123",
-      "projectId": "1757830698167",
-      "template": "node",
+      "name": "python-app",
+      "projectId": "1758215784931",
+      "template": "python",
+      "createdAt": "2025-09-18T17:16:24.933Z",
+      "containerName": null,
       "fileTree": [
         {
-          "name": "main.js",
-          "type": "file",
-          "fullPath": "main.js"
-        },
-        {
-          "name": "package.json",
-          "type": "file",
-          "fullPath": "package.json"
+          "name": "main.py",
+          "type": "file"
         }
       ]
     }

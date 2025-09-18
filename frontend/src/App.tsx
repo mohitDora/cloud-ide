@@ -7,7 +7,7 @@ function App() {
   return <>
   <Routes>
     <Route path="/" element={<Dashboard/>} />
-    <Route path="/:id" element={<Ide />} />
+    <Route path="/:projectId" element={<Ide />} />
   </Routes>
   </>;
 }

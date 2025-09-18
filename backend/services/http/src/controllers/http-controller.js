@@ -1,7 +1,6 @@
 const express = require("express");
 const fs = require("fs-extra");
 const path = require("path");
-const { execSync, spawn } = require("child_process");
 
 const {
   BASE_FILE_TREE_PYTHON,
@@ -9,17 +8,13 @@ const {
   DB_PATH,
   ROOT_DIR,
 } = require("../utils/constants");
-const {
-  copyFolder,
-  updateFileTree,
-  getOrCreateContainer,
-} = require("../utils/http-utils");
+const { copyFolder, updateFileTree } = require("../utils/http-utils");
 
 const router = express.Router();
 
 router.post("/create-project", (req, res) => {
   try {
-    const { userId, template } = req.query;
+    const { userId, template, name } = req.query;
 
     const projectId = Date.now().toString();
 
@@ -36,19 +31,52 @@ router.post("/create-project", (req, res) => {
     }
     db.projects.push({
       userId,
+      name,
       projectId,
       template,
+      createdAt: new Date().toISOString(),
       containerName: null,
       fileTree:
         template === "node" ? BASE_FILE_TREE_NODEJS : BASE_FILE_TREE_PYTHON,
     });
     fs.writeFileSync(DB_PATH, JSON.stringify(db));
 
-    res.status(200).json({ projectId, containerName });
+    res.status(200).json({ projectId });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
+router.get("/projects", (req, res) => {
+  try {
+    const { userId } = req.query;
+    const db = JSON.parse(fs.readFileSync(DB_PATH));
+    const projects = db.projects
+      .filter((user) => user.userId === userId)
+      .map((p) => ({
+        id: p.projectId,
+        name: p.name,
+        template: p.template,
+        createdAt: p.createdAt,
+      }));
+    res.status(200).json({ projects });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/project", (req, res) => {
+  try {
+    const { userId, projectId } = req.query;
+    const db = JSON.parse(fs.readFileSync(DB_PATH));
+    const project = db.projects.find(
+      (user) => user.userId === userId && user.projectId === projectId
+    );
+    res.status(200).json({ project });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
 
 router.get("/file-content", (req, res) => {
   try {
@@ -82,7 +110,7 @@ router.post("/file-tree", (req, res) => {
   try {
     const { userId, projectId, filepath, type } = req.query;
 
-    const fullPath = path.join(
+    const fullpath = path.join(
       ROOT_DIR,
       "s3",
       "code",
@@ -92,9 +120,9 @@ router.post("/file-tree", (req, res) => {
     );
 
     if (type === "folder") {
-      fs.mkdirSync(fullPath, { recursive: true });
+      fs.mkdirSync(fullpath, { recursive: true });
     } else {
-      fs.writeFileSync(fullPath, "", "utf-8");
+      fs.writeFileSync(fullpath, "", "utf-8");
     }
 
     updateFileTree(userId, projectId);
@@ -109,7 +137,7 @@ router.put("/file-tree", (req, res) => {
   try {
     const { userId, projectId, filepath, newFilepath } = req.query;
 
-    const fullPath = path.join(
+    const fullpath = path.join(
       ROOT_DIR,
       "s3",
       "code",
@@ -118,7 +146,7 @@ router.put("/file-tree", (req, res) => {
       filepath
     );
 
-    const newFullPath = path.join(
+    const newFullpath = path.join(
       ROOT_DIR,
       "s3",
       "code",
@@ -127,7 +155,7 @@ router.put("/file-tree", (req, res) => {
       newFilepath
     );
 
-    fs.renameSync(fullPath, newFullPath);
+    fs.renameSync(fullpath, newFullpath);
 
     updateFileTree(userId, projectId);
 
@@ -141,7 +169,7 @@ router.delete("/file-tree", (req, res) => {
   try {
     const { userId, projectId, filepath } = req.query;
 
-    const fullPath = path.join(
+    const fullpath = path.join(
       ROOT_DIR,
       "s3",
       "code",
@@ -150,7 +178,7 @@ router.delete("/file-tree", (req, res) => {
       filepath
     );
 
-    fs.rmSync(fullPath, { recursive: true, force: true });
+    fs.rmSync(fullpath, { recursive: true, force: true });
 
     updateFileTree(userId, projectId);
 

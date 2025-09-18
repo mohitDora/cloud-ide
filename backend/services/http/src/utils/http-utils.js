@@ -18,7 +18,7 @@ const getFileTree = (dirPath, basePath = dirPath) => {
     return {
       name: path.basename(dirPath),
       type: "file",
-      fullPath: path.relative(basePath, dirPath),
+      fullpath: path.relative(basePath, dirPath),
     };
   }
 
@@ -26,7 +26,7 @@ const getFileTree = (dirPath, basePath = dirPath) => {
     return {
       name: path.basename(dirPath),
       type: "folder",
-      fullPath: path.relative(basePath, dirPath),
+      fullpath: path.relative(basePath, dirPath),
       children: fs
         .readdirSync(dirPath)
         .map((child) => getFileTree(path.join(dirPath, child), basePath)),

@@ -7,17 +7,20 @@ const BASE_FILE_TREE_PYTHON = [
   {
     name: "app.py",
     type: "file",
+    fullpath: "app.py",
   },
 ];
 
 const BASE_FILE_TREE_NODEJS = [
   {
-    name: "server.js",
+    name: "index.js",
     type: "file",
+    fullpath: "index.js",
   },
   {
-    name: "package.json",
+    name: "main.js",
     type: "file",
+    fullpath: "main.js",
   },
 ];
 
@@ -26,5 +29,4 @@ module.exports = {
   BASE_FILE_TREE_NODEJS,
   DB_PATH,
   ROOT_DIR,
-  BASE_IMAGE,
 };

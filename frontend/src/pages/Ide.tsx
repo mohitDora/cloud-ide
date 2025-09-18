@@ -6,34 +6,41 @@ import {
 } from "@/components/ui/resizable";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-
-const userId = "mohit123";
-const projectId = "1757830698167";
-
-const wsServerUrl = `ws://localhost:4000?userId=${userId}&projectId=${projectId}`;
-const httpServerUrl = `http://localhost:3000/api`;
+import { httpServerUrl, userId, wsServerUrl } from "@/utils/constants";
 
 interface File {
-  id: string;
   name: string;
   type: "file" | "folder";
+  fullpath: string;
   children?: File[];
+}
+
+interface Project {
+
+  containerName: string
+  createdAt: string
+  fileTree: File[]
+  name: string
+  projectId: string
+  template: string
+  userId: string
 }
 
 interface FolderStructureProps {
   folderStructure: File[];
+  setSelectedFilename: (filename: string) => void;
 }
 
-const FolderTree = ({ folderStructure }: FolderStructureProps) => {
+const FolderTree = ({ folderStructure, setSelectedFilename }: FolderStructureProps) => {
   return (
     <div className="px-2">
       {folderStructure.map((folder) => (
-        <div key={folder.id} className="ml-4">
+        <div key={folder.fullpath} className="ml-4" onClick={() => folder.type === "file" && setSelectedFilename(folder.name)}>
           {folder.name}
-          {folder.children && <FolderTree folderStructure={folder.children} />}
+          {folder.children && <FolderTree folderStructure={folder.children} setSelectedFilename={setSelectedFilename} />}
         </div>
       ))}
     </div>
@@ -41,43 +48,22 @@ const FolderTree = ({ folderStructure }: FolderStructureProps) => {
 };
 
 const Ide = () => {
-  const { id } = useParams();
+  const { projectId } = useParams();
 
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFilename, setSelectedFilename] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [files, setFiles] = useState<File[]>([
-    {
-      id: "1",
-      name: "src",
-      type: "folder",
-      children: [
-        {
-          id: "2",
-          name: "index.ts",
-          type: "file",
-        },
-      ],
-    },
-    {
-      id: "3",
-      name: "package.json",
-      type: "file",
-    },
-    {
-      id: "4",
-      name: "public",
-      type: "folder",
-      children: [
-        {
-          id: "5",
-          name: "logo.png",
-          type: "file",
-        },
-      ],
-    },
-  ]);
+  const [project, setProject] = useState<Project>({
+    containerName: "",
+    createdAt: "",
+    fileTree: [],
+    name: "",
+    projectId: "",
+    template: "",
+    userId: "",
+  });
+  const [files, setFiles] = useState<File[]>([]);
 
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -86,7 +72,10 @@ const Ide = () => {
   useEffect(() => {
     initializeTerminal();
     initializeWebSocket();
-    getFileContent("main.js");
+    if (projectId) {
+      getProjectById(userId, projectId)
+      getFiles(userId, projectId);
+    }
 
     return () => {
       if (terminalInstanceRef.current) {
@@ -97,7 +86,35 @@ const Ide = () => {
         wsRef.current.close();
       }
     };
-  }, [id]);
+  }, [projectId]);
+
+  const getFileContent = useCallback(async (filepath: string) => {
+    if (!filepath) return;
+    try {
+      const res = await axios.get(`${httpServerUrl}/file-content`, {
+        params: {
+          userId,
+          projectId,
+          filepath,
+        },
+      });
+
+      setFileContent(res.data.fileContent);
+    } catch (err) {
+      console.log(err);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (selectedFilename) {
+      getFileContent(selectedFilename)
+    }
+  }, [selectedFilename, getFileContent]);
+
+  const getProjectById = async (userId: string, projectId: string) => {
+    const res = await axios(`${httpServerUrl}/project?userId=${userId}&projectId=${projectId}`)
+    setProject(res.data.project)
+  }
 
   const initializeWebSocket = () => {
     wsRef.current = new WebSocket(wsServerUrl);
@@ -119,7 +136,8 @@ const Ide = () => {
             `\r\n\x1b[31m[ERROR]\x1b[0m ${msg.message}`
           );
         }
-      } catch (e) {
+      } catch (err) {
+        console.error(err);
         terminalInstanceRef.current?.write(event.data);
       }
     };
@@ -138,34 +156,20 @@ const Ide = () => {
     };
   };
 
-  function debounce(func: (...args: any[]) => void, delay: number) {
-    let timer: any;
-    return (...args: any[]) => {
+  function debounce(func: (...args: unknown[]) => void, delay: number) {
+    let timer: ReturnType<typeof setTimeout>;
+    return (...args: unknown[]) => {
       clearTimeout(timer);
       timer = setTimeout(() => func(...args), delay);
     };
   }
 
-  // const getFiles = () => {
-  //   setFiles([]);
-  // };
-
-  const getFileContent = async (filepath: string) => {
-    try {
-      const res = await axios.get(`${httpServerUrl}/file-content`, {
-        params: {
-          userId,
-          projectId,
-          filepath,
-        },
-      });
-
-      setFileContent(res.data.fileContent);
-      console.log(res.data.fileContent);
-    } catch (err) {
-      console.log(err);
-    }
+  const getFiles = async (userId: string, projectId: string) => {
+    const res = await axios(`${httpServerUrl}/file-tree?userId=${userId}&projectId=${projectId}`)
+    setFiles(res.data.fileTree);
   };
+
+
 
   // const saveFile = () => {};
 
@@ -214,10 +218,12 @@ const Ide = () => {
       };
     }
   };
+  console.log(project)
 
   const sendFileUpdate = useMemo(
     () =>
-      debounce((value: string | undefined) => {
+      debounce((...args: unknown[]) => {
+        const value = args[0] as string | undefined;
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.send(
             JSON.stringify({
@@ -230,39 +236,45 @@ const Ide = () => {
           );
         }
       }, 2500),
-    [userId, projectId, selectedFile]
+    []
   );
 
   return (
     <main className="flex h-screen">
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={25} className="max-w-[200px]">
-          <FolderTree folderStructure={files} />
+          <FolderTree folderStructure={files} setSelectedFilename={setSelectedFilename} />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={75}>
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={50}>
-              <MonacoEditor
-                height="100%"
-                language={"javascript"}
-                onMount={(editor) => {
-                  editor.focus();
-                }}
-                value={fileContent}
-                onChange={(value) => {
-                  setFileContent(value || "");
-                  sendFileUpdate(value || "");
-                }}
-                theme="vs-dark"
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                  wordWrap: "on",
-                  automaticLayout: true,
-                  scrollBeyondLastLine: false,
-                }}
-              />
+              {
+                selectedFilename ?
+                  <MonacoEditor
+                    height="100%"
+                    language={project.template === "node" ? "javascript" : "python"}
+                    onMount={(editor) => {
+                      editor.focus();
+                    }}
+                    value={fileContent}
+                    onChange={(value) => {
+                      setFileContent(value || "");
+                      sendFileUpdate(value || "");
+                    }}
+                    theme="vs-dark"
+                    options={{
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      wordWrap: "on",
+                      automaticLayout: true,
+                      scrollBeyondLastLine: false,
+                    }}
+                  /> :
+                  <div className="h-full w-full flex items-center justify-center bg-black text-white">
+                    <p className="text-2xl">Select a file to start coding</p>
+                  </div>
+              }
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel>

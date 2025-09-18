@@ -15,7 +15,7 @@ const wss = new WebSocket.Server({ server });
 const ROOT_DIR = path.join(__dirname, "..", "..", "..");
 const projectPath = path.join(ROOT_DIR, "s3", "code");
 const DB_PATH = path.join(ROOT_DIR, "db/db.json");
-const BASE_IMAGE = "sandbox";
+const BASE_IMAGE = "mohitdora21/sandbox:latest";
 
 app.use(express.json());
 
@@ -52,7 +52,7 @@ const getContainerName = (userId, projectId) => {
   return containerName;
 };
 
-const createOrStartContainer = (containerName) => {
+const createOrStartContainer = (containerName, userId, projectId) => {
   try {
     execSync(`docker inspect ${containerName}`, { stdio: "ignore" });
     return;
@@ -65,7 +65,7 @@ const createOrStartContainer = (containerName) => {
     -v ${projectPath}/${userId}/${projectId}:/app \
     --memory=256m --cpus="0.5" \
     ${BASE_IMAGE} \
-    python3 main.py`,
+    bash`,
       { stdio: "ignore" }
     );
   } catch (e) {
@@ -94,7 +94,9 @@ wss.on("connection", (ws, req) => {
   console.log("Client connected");
 
   const urlParams = new URLSearchParams(req.url.replace("/?", ""));
+  console.log(urlParams)
   const userId = urlParams.get("userId");
+  console.log(userId)
   const projectId = urlParams.get("projectId");
 
   const containerName = getContainerName(userId, projectId);
@@ -105,7 +107,7 @@ wss.on("connection", (ws, req) => {
     name: "xterm-color",
     cols: 80,
     rows: 30,
-    cwd: "/app",
+    cwd: "D:\\Projects\\cloud-ide",
     env: process.env,
   });
 
