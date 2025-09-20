@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import axios from "axios";
-import { httpServerUrl, userId, projectId, wsServerUrl } from "@/utils/constants";
+import { httpServerUrl, userId } from "@/utils/constants";
 import { Link } from "react-router-dom";
 
 interface Project {

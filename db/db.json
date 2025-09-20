@@ -3,20 +3,15 @@
     {
       "userId": "mohit123",
       "name": "first-node-app",
-      "projectId": "1758208560903",
+      "projectId": "1758385104011",
       "template": "node",
-      "createdAt": "2025-09-18T15:16:00.905Z",
-      "containerName": "runner-mohit123-1758208560903",
+      "createdAt": "2025-09-20T16:18:24.013Z",
+      "containerName": "runner-mohit123-1758385104011",
       "fileTree": [
         {
           "name": "index.js",
           "type": "file",
           "fullpath": "index.js"
-        },
-        {
-          "name": "main.js",
-          "type": "file",
-          "fullpath": "main.js"
         },
         {
           "name": "package.json",
@@ -28,20 +23,6 @@
           "type": "folder",
           "fullpath": "src",
           "children": []
-        }
-      ]
-    },
-    {
-      "userId": "mohit123",
-      "name": "python-app",
-      "projectId": "1758215784931",
-      "template": "python",
-      "createdAt": "2025-09-18T17:16:24.933Z",
-      "containerName": null,
-      "fileTree": [
-        {
-          "name": "main.py",
-          "type": "file"
         }
       ]
     }

@@ -31,20 +31,19 @@ app.use(cors(corsOptions));
 const getContainerName = (userId, projectId) => {
   const db = JSON.parse(fs.readFileSync(DB_PATH, "utf-8"));
 
-  let containerName;
-
   const project = db.projects.find(
     (p) => p.userId === userId && p.projectId === projectId
   );
 
-  containerName = project?.containerName;
-
-  if (containerName) {
-    return containerName;
+  if (!project) {
+    return null;
   }
 
-  containerName = `runner-${userId}-${projectId}`;
+  if (project.containerName) {
+    return project.containerName;
+  }
 
+  const containerName = `runner-${userId}-${projectId}`;
   project.containerName = containerName;
 
   fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
@@ -94,12 +93,21 @@ wss.on("connection", (ws, req) => {
   console.log("Client connected");
 
   const urlParams = new URLSearchParams(req.url.replace("/?", ""));
-  console.log(urlParams)
   const userId = urlParams.get("userId");
-  console.log(userId)
   const projectId = urlParams.get("projectId");
 
   const containerName = getContainerName(userId, projectId);
+
+  if (!containerName) {
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        message: `No project found for userId=${userId}, projectId=${projectId}`,
+      })
+    );
+    ws.close();
+    return;
+  }
 
   createOrStartContainer(containerName, userId, projectId);
 
@@ -107,17 +115,19 @@ wss.on("connection", (ws, req) => {
     name: "xterm-color",
     cols: 80,
     rows: 30,
-    cwd: "D:\\Projects\\cloud-ide",
+    cwd: process.cwd(),
     env: process.env,
   });
 
   shell.onData((data) => {
-    ws.send(
-      JSON.stringify({
-        type: "terminal:output",
-        data,
-      })
-    );
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify({
+          type: "terminal:output",
+          data,
+        })
+      );
+    }
   });
 
   ws.on("message", (message) => {
@@ -126,10 +136,13 @@ wss.on("connection", (ws, req) => {
 
       if (data.type === "file:update") {
         const { userId, projectId, filePath, content } = data;
-
         const FILE_PATH = path.join(
           ROOT_DIR,
-          `/s3/code/${userId}/${projectId}/${filePath}`
+          "s3",
+          "code",
+          userId,
+          projectId,
+          filePath
         );
         fs.writeFileSync(FILE_PATH, content);
       }
@@ -144,16 +157,15 @@ wss.on("connection", (ws, req) => {
 
   ws.on("close", () => {
     console.log("Client disconnected");
-
     stopContainer(containerName);
   });
 
   ws.on("error", (error) => {
     console.log(error);
-
     stopContainer(containerName);
   });
 });
+
 
 const port = process.env.PORT || 4000;
 server.listen(port, () => {

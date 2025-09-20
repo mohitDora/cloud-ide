@@ -18,9 +18,9 @@ const BASE_FILE_TREE_NODEJS = [
     fullpath: "index.js",
   },
   {
-    name: "main.js",
+    name: "package.json",
     type: "file",
-    fullpath: "main.js",
+    fullpath: "package.json",
   },
 ];
 
