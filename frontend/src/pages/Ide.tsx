@@ -36,6 +36,7 @@ interface FolderStructureProps {
   onFileRename: (oldPath: string, newName: string) => void;
   onFolderAdd: (parentPath: string) => void;
   onFileAdd: (parentPath: string) => void;
+  currentFile: string
 }
 const FolderTree = ({
   folderStructure,
@@ -44,6 +45,7 @@ const FolderTree = ({
   onFileRename,
   onFolderAdd,
   onFileAdd,
+  currentFile
 }: FolderStructureProps) => {
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [newPath, setNewPath] = useState<string>("");
@@ -82,7 +84,7 @@ const FolderTree = ({
             <div key={item.fullpath} className="flex flex-col">
               <div className="flex items-center justify-between group">
                 <div
-                  className="flex items-center flex-1 cursor-pointer truncate"
+                  className={`flex items-center flex-1 cursor-pointer truncate ${currentFile === item.fullpath ? "text-[#ecc48d]" : ""}`}
                   onClick={() => {
                     if (item.type === "folder") {
                       handleToggle(item.fullpath);
@@ -95,7 +97,7 @@ const FolderTree = ({
                     <FileIcon className="inline mr-2 shrink-0" />
                   ) : (
                     <Folder
-                      className={`inline mr-2 shrink-0 ${openFolders.includes(item.fullpath) ? "text-[#ecc48d]" : "text-gray-400"
+                      className={`inline mr-2 shrink-0 ${!openFolders.includes(item.fullpath) ? "text-[#ecc48d]" : "text-gray-400"
                         }`}
                     />
                   )}
@@ -146,9 +148,10 @@ const FolderTree = ({
                 </div>
               </div>
 
-              {openFolders.includes(item.fullpath) && item.children && item.children.length > 0 && (
+              {!openFolders.includes(item.fullpath) && item.children && item.children.length > 0 && (
                 <FolderTree
                   folderStructure={item.children}
+                  currentFile={currentFile}
                   setSelectedFilename={setSelectedFilename}
                   onFileDelete={onFileDelete}
                   onFileRename={onFileRename}
@@ -504,7 +507,7 @@ const Ide = () => {
   return (
     <main className="flex h-screen">
       <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={25} className="min-w-[250px] max-w-[400px] bg-[#1e1e2e] text-white p-4">
+        <ResizablePanel defaultSize={25} className="min-w-[250px] max-w-[400px] bg-[#1e1e2e] text-white p-4" >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold">Files</h2>
             <div className="flex gap-2">
@@ -525,6 +528,7 @@ const Ide = () => {
           <FolderTree
             folderStructure={files}
             setSelectedFilename={setSelectedFilename}
+            currentFile={selectedFilename ?? ""}
             onFileDelete={deleteFileOrFolder}
             onFileRename={renameFileOrFolder}
             onFolderAdd={(parentPath) => addFileOrFolder(parentPath, "folder")}

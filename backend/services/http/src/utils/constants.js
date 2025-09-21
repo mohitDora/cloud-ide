@@ -5,9 +5,9 @@ const DB_PATH = path.join(ROOT_DIR, "db/db.json");
 
 const BASE_FILE_TREE_PYTHON = [
   {
-    name: "app.py",
+    name: "main.py",
     type: "file",
-    fullpath: "app.py",
+    fullpath: "main.py",
   },
 ];
 

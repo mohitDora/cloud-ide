@@ -2,11 +2,26 @@
   "projects": [
     {
       "userId": "mohit123",
-      "name": "first-node-app",
-      "projectId": "1758385104011",
+      "name": "python-app",
+      "projectId": "1758435759697",
+      "template": "python",
+      "createdAt": "2025-09-21T06:22:39.698Z",
+      "containerName": "runner-mohit123-1758435759697",
+      "fileTree": [
+        {
+          "name": "main.py",
+          "type": "file",
+          "fullpath": "main.py"
+        }
+      ]
+    },
+    {
+      "userId": "mohit123",
+      "name": "node-app",
+      "projectId": "1758436034884",
       "template": "node",
-      "createdAt": "2025-09-20T16:18:24.013Z",
-      "containerName": "runner-mohit123-1758385104011",
+      "createdAt": "2025-09-21T06:27:14.885Z",
+      "containerName": null,
       "fileTree": [
         {
           "name": "index.js",
@@ -22,7 +37,13 @@
           "name": "src",
           "type": "folder",
           "fullpath": "src",
-          "children": []
+          "children": [
+            {
+              "name": "main.js",
+              "type": "file",
+              "fullpath": "src\\main.js"
+            }
+          ]
         }
       ]
     }

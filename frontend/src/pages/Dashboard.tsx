@@ -44,7 +44,7 @@ const Projects = ({ projects }: ProjectsProps) => (
       >
         <h2 className="font-semibold">{project.name}</h2>
         <p>{project.template}</p>
-        <p className="text-sm text-gray-500">{project.createdAt}</p>
+        <p className="text-sm text-gray-500">{`Created At: ${new Date(project.createdAt).toDateString()}`}</p>
       </div>
       </Link>
     ))}
@@ -57,11 +57,10 @@ interface DialogBoxProps {
 
 const DialogBox = ({ onCreate }: DialogBoxProps) => {
   const [projectName, setProjectName] = useState("");
-  const [projectTemplate, setProjectTemplate] = useState<
-    "python" | "node" | null
-  >(null);
+  const [projectTemplate, setProjectTemplate] = useState<"python" | "node" | null>(null);
+  const [open, setOpen] = useState(false); // control dialog state
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!projectName.trim() || !projectTemplate) {
@@ -75,13 +74,15 @@ const DialogBox = ({ onCreate }: DialogBoxProps) => {
       createdAt: new Date().toLocaleDateString(),
     };
 
-    onCreate(newProject);
+    await onCreate(newProject);
+
     setProjectName("");
     setProjectTemplate(null);
+    setOpen(false);
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>Create App</Button>
       </DialogTrigger>
@@ -107,9 +108,7 @@ const DialogBox = ({ onCreate }: DialogBoxProps) => {
               <Label htmlFor="template">Template</Label>
               <Select
                 value={projectTemplate ?? ""}
-                onValueChange={(val) =>
-                  setProjectTemplate(val as "python" | "node")
-                }
+                onValueChange={(val) => setProjectTemplate(val as "python" | "node")}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a template" />
@@ -133,6 +132,7 @@ const DialogBox = ({ onCreate }: DialogBoxProps) => {
     </Dialog>
   );
 };
+
 
 const Dashboard = () => {
   const [projects, setProjects] = useState<Project[]>([]);
